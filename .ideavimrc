@@ -1,0 +1,7 @@
+" Use Vim settings, rather then Vi settings (much better!).
+" This must be first, because it changes other options as a side effect.
+set nocompatible    " set nocp
+set hlsearch
+set incsearch		" do incremental searching
+set showcmd		    " display incomplete commands
+set smartcase
