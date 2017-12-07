@@ -65,6 +65,15 @@ export PATH=${HOME}:/usr/local/bin:${PATH}
 export HASHICORP_HOME="/opt/hashicorp"
 export PATH="${HASHICORP_HOME}:${PATH}"
 
+export TFLINT_HOME="/opt/tflint/default"
+export PATH="${TFLINT_HOME}:${PATH}"
+
+export OC_HOME="/opt/openshift-cli"
+export PATH="${OC_HOME}:${PATH}"
+
+export JQ_HOME="/opt/jq"
+export PATH="${JQ_HOME}:${PATH}"
+
 # set indent string for xmllint
 export XMLLINT_INDENT="    "
 
@@ -89,6 +98,7 @@ alias ls='/bin/ls -lhG'
 alias ll='/bin/ls -lhG'
 alias la='/bin/ls -lhAG'
 alias tree='tree -C'
+# alias vim='/Applications/MacVim.app/Contents/bin/vim'
 
 # alias check-mvn-repo='find ${HOME}/.m2/repository \( \( -name \*splice\* -o -path \*splice\* \) -o \( -name \*derby\* -o -path \*derby\* \) -o \( -name \*hbase\* -o -path \*hbase\* \) -o \( -name \*spark\* -o -path \*spark\* \) \)'
 # alias clean-mvn-repo='find ${HOME}/.m2/repository \( \( -name \*splice\* -o -path \*splice\* \) -o \( -name \*derby\* -o -path \*derby\* \) -o \( -name \*hbase\* -o -path \*hbase\* \) -o \( -name \*spark\* -o -path \*spark\* \) \) -exec rm -rf {} \;'
