@@ -27,7 +27,7 @@ endif
 
 if has("gui_running")
   set lines=40 columns=132
-  set guifont=Monaco:h10
+  set guifont=JetBrains\ Mono:h10
 endif
 
 set background=dark

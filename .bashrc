@@ -9,12 +9,11 @@ fi
 [[ "$-" != *i* ]] && return
 
 source /usr/local/share/bash-completion/bash_completion
-
-complete -C /Library/Frameworks/Python.framework/Versions/2.7/bin/aws_completer aws
-
+complete -C /usr/local/bin/aws_completer aws
+source <(kubectl completion bash)
 # Source git-prompt
-if [ -f /opt/src/bash-completion/others/git-prompt.sh ]; then
-	source  /opt/src/bash-completion/others/git-prompt.sh
+if [ -f /opt/src/git/git-2.30.0/contrib/completion/git-prompt.sh ]; then
+    source  /opt/src/git/git-2.30.0/contrib/completion/git-prompt.sh
 fi
 
 # User dependent .bashrc file
@@ -27,52 +26,6 @@ shopt -s histappend
 shopt -s cdspell
 shopt -s globstar
 
-# for java nonsense
-export J8_HOME="/Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home"
-export JAVA_HOME=${J8_HOME}
-export PATH="${JAVA_HOME}/bin:${PATH}"
-
-# for maven, java builds
-export M2_HOME="/opt/maven/default"
-export M2=${M2_HOME}/bin
-export PATH="${M2}:${PATH}"
-export MAVEN_OPTS="-Xmx4g -Djava.awt.headless=true"
-source ${HOME}/bin/colorize-maven.sh
-
-export ANT_HOME="/opt/ant/default"
-export PATH="${ANT_HOME}/bin:${PATH}"
-
-export JMETER_HOME="/opt/jmeter/default"
-export PATH="${JMETER_HOME}/bin:${PATH}"
-
-export GRADLE_HOME="/opt/gradle/default"
-export PATH="${GRADLE_HOME}/bin:${PATH}"
-
-export GROOVY_HOME="/opt/groovy/default"
-export PATH="${GROOVY_HOME}/bin:${PATH}"
-
-export SCALA_HOME="/opt/scala/default"
-export PATH="${SCALA_HOME}/bin:${PATH}"
-
-export SBT_HOME="/opt/sbt/default"
-export PATH="${SBT_HOME}/bin:${PATH}"
-
-export GOPATH="${HOME}/go"
-export GOROOT="/usr/local/go"
-export PATH="${GOROOT}/bin:${PATH}"
-export PATH=${HOME}:/usr/local/bin:${PATH}
-
-export HASHICORP_HOME="/opt/hashicorp"
-export PATH="${HASHICORP_HOME}:${PATH}"
-
-export TFLINT_HOME="/opt/tflint/default"
-export PATH="${TFLINT_HOME}:${PATH}"
-
-export OC_HOME="/opt/openshift-cli"
-export PATH="${OC_HOME}:${PATH}"
-
-export JQ_HOME="/opt/jq"
-export PATH="${JQ_HOME}:${PATH}"
 
 # set indent string for xmllint
 export XMLLINT_INDENT="    "
@@ -88,7 +41,6 @@ export HISTIGNORE="ls:la:ll:cd:cd ..:git st:pwd:clear:celar:ckear:clea:history:e
 export HISTTIMEFORMAT='%F %T '
 
 # Aliases
-# alias python='/usr/local/bin/python2.7'
 alias grep='grep --color'          # show grep string in colour
 alias egrep='egrep --color=auto'   # show differences in colour
 alias fgrep='fgrep --color=auto'   # show differences in colour
@@ -99,13 +51,71 @@ alias ll='/bin/ls -lhG'
 alias la='/bin/ls -lhAG'
 alias tree='tree -C'
 # alias vim='/Applications/MacVim.app/Contents/bin/vim'
+alias nproc='sysctl -n hw.ncpu'
 
 # alias check-mvn-repo='find ${HOME}/.m2/repository \( \( -name \*splice\* -o -path \*splice\* \) -o \( -name \*derby\* -o -path \*derby\* \) -o \( -name \*hbase\* -o -path \*hbase\* \) -o \( -name \*spark\* -o -path \*spark\* \) \)'
 # alias clean-mvn-repo='find ${HOME}/.m2/repository \( \( -name \*splice\* -o -path \*splice\* \) -o \( -name \*derby\* -o -path \*derby\* \) -o \( -name \*hbase\* -o -path \*hbase\* \) -o \( -name \*spark\* -o -path \*spark\* \) \) -exec rm -rf {} \;'
 # alias clean-mvn-splice-repo='find ${HOME}/.m2/repository \( \( -name \*splice\* -o -path \*splice\* \) \) -exec rm -rf {} \;'
 alias nuke-mvn-repo='find ${HOME}/.m2/repository -mindepth 1 -maxdepth 1 -type d -exec rm -rf '{}' \;'
 
-alias clean-source-tree="git clean -ndx | awk '! /iml/ && ! /\.idea/ {print $3}' | xargs rm -rf"
+alias clean-source-tree="git clean -ndx | awk '! /iml/ && ! /\.idea/ && ! /.stignore/ {print $3}' | xargs rm -rf"
+
+export GOROOT=/usr/local/go
+export GOPATH=${HOME}/go
+export PATH=${GOPATH}/bin:${GOROOT}/bin:${PATH}
+
+reset-git-fork () {
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    git fetch upstream
+    git remote prune upstream
+    git fetch origin
+    git remote prune origin
+    git reset upstream/"${branch}" --hard
+    git push origin "${branch}" --force
+}
+
+update-git-fork () {
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    git reset HEAD --hard
+    git fetch upstream
+    git remote prune upstream
+    git rebase upstream/"${branch}"
+    git push origin "${branch}"
+}
+
+dhub_login () { 
+    cat ${HOME}/.dockerhub | docker login --username ammolitor --password-stdin
+}
+
+dhub_fdb_login () { 
+    cat ${HOME}/.dockerhub_fdb | docker login --username foundationdb --password-stdin
+}
+
+dapple_login () {
+    cat ${HOME}/.artifactory | docker login --username amolitor --password-stdin docker.apple.com
+}
+
+decr_login () {
+    AWS_ACCOUNT=$(aws --output text sts get-caller-identity --query 'Account')
+    AWS_REGION=$(aws configure get region)
+    aws ecr get-login-password | docker login --username AWS --password-stdin  ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com
+}
+
+mac_ec2_session_release () {
+    aws ssm start-session --target $(aws --output text ec2 describe-instances --filters Name=tag:Name,Values=FDB-Development-EC2-Mac-Instance-ReleaseBuild    Name=instance-state-name,Values=running --query 'Reservations[].Instances[?InstanceType==`mac1.metal`].InstanceId')
+}
+
+mac_ec2_session_pr () {
+    aws ssm start-session --target $(aws --output text ec2 describe-instances --filter Name=tag:Name,Values=FDB-Development-EC2-Mac-Instance-PullRequestBuild Name=instance-state-name,Values=running --query 'Reservations[].Instances[?InstanceType==`mac1.metal`].InstanceId')
+}
+
+function diff_sections {
+  vim -d <(head -$3 $1 | tail +$2) <(head -$5 $1 | tail +$4)
+}
+
+# for python using custom CA 
+# SSL_CERT_FILE=/System/Library/OpenSSL/cert.pem
+# REQUESTS_CA_BUNDLE=/System/Library/OpenSSL/cert.pem
 
 # a) function settitle
 settitle () 
@@ -118,13 +128,14 @@ reset=$(tput sgr0)
 bold=$(tput bold)
 
 black=$(tput setaf 0)
-#red=$(tput setaf 1)
+red=$(tput setaf 1)
 green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 blue=$(tput setaf 4)
-#magenta=$(tput setaf 5)
-#cyan=$(tput setaf 6)
-#white=$(tput setaf 7)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+gray=$(tput setaf 8)
 default=$(tput setaf 9)
 
 #bg_black=$(tput setab 0)
@@ -137,5 +148,5 @@ default=$(tput setaf 9)
 #bg_white=$(tput setab 7)
 #bg_default=$(tput setab 9)
 
-PS1='\[\e]0;\h:\w\a\]\[$bold$black\][\[$reset\]\[$green\]\w\[$reset\]\[$bold$black\]]\[$reset\]\[$yellow\]$(__git_ps1)\[$reset\]
-\[$bold$blue\]\u\[$reset\]@\[$bold$black\]\h\[$reset\]> '
+PS1='\[\e]0;\h:\w\a\]\[$bold$gray\][\[$reset\]\[$cyan\]\D{%T}\[$reset\] \[$green\]\w\[$reset\]\[$bold$gray\]]\[$reset\]\[$yellow\]$(__git_ps1)\[$reset\]
+\[$bold$blue\]\u\[$reset\]@\[$bold$gray\]\h\[$reset\]> '
